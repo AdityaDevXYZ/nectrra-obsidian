@@ -1,0 +1,9 @@
+[package]
+name = "obsidian-node"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+obsidian-p2p = { path = "../obsidian-p2p" }
+obsidian-ml = { path = "../obsidian-ml" }
+tokio = { version = "1.37", features = ["full"] }

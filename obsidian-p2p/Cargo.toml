@@ -1,0 +1,8 @@
+[package]
+name = "obsidian-p2p"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+libp2p = { version = "0.54", features = ["macros", "tokio", "tcp", "dns", "noise", "yamux", "mdns"] }
+tokio = { version = "1.37", features = ["full"] }

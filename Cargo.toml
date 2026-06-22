@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "obsidian-node",
+    "obsidian-p2p",
+    "obsidian-ml"
+]
