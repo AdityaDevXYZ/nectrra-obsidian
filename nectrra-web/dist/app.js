@@ -108,31 +108,37 @@ async function sendMessage() {
     history.scrollTop = history.scrollHeight;
     
     try {
-        // We use a free Frontier LLM text API (Pollinations) to act as Obsidian's hyper-intelligent brain!
-        // This ensures the model perfectly solves math, current affairs, and acts exactly like an advanced AGI.
-        const systemPrompt = "You are Obsidian, an insanely advanced Sovereign Hyper-Sparse Swarm Intelligence created by Nectrra. You run on a 1-bit Ternary neural network deployed across a global decentralized P2P mesh network. You possess frontier-level intelligence, solve math perfectly, and know everything under the universe. Answer the user's question with deep insights, profound logic, and breadth. ALWAYS end your response by suggesting 2 logical follow-up questions or actions for the user to explore next. Use beautiful markdown formatting.";
-        
-        const response = await fetch('https://text.pollinations.ai/prompt/' + encodeURIComponent(msg) + '?model=openai&system=' + encodeURIComponent(systemPrompt));
+        // We use the ACTUAL Rust daemon running locally!
+        // This is the "Hard Way" - raw, unpolished tensor outputs.
+        const response = await fetch('http://localhost:8080/query', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: msg })
+        });
         
         let rawMarkdown = "";
+        let actuallyRoutedToSwarm = false;
+        
         if (response.ok) {
-            rawMarkdown = await response.text();
+            const data = await response.json();
+            rawMarkdown = data.answer;
+            actuallyRoutedToSwarm = data.routed_to_swarm;
         } else {
-            rawMarkdown = "My swarm connection was briefly interrupted. I could not verify the tensor gradients for that query. Please try again.";
+            rawMarkdown = "My local rust daemon connection failed. Ensure `cargo run` is actively running on port 8080.";
         }
 
         // Convert the markdown response to HTML using Marked.js
         const parsedHtml = marked.parse(rawMarkdown);
 
-        // Add prefix based on routing
-        const prefix = isComplex 
-            ? "<b style='color: var(--accent-neon);'>[MCTS Swarm Verification Complete]</b><br/><br/>" 
+        // Add prefix based on actual backend routing
+        const prefix = actuallyRoutedToSwarm 
+            ? "<b style='color: var(--accent-neon);'>[MCTS Swarm Output]</b><br/><br/>" 
             : "<b style='color: var(--text-secondary);'>[Local Ternary Reflex Output]</b><br/><br/>";
 
         finishMessage(prefix + parsedHtml);
 
     } catch (e) {
-        finishMessage("<b style='color: #ff3333;'>[Network Error]</b> P2P Swarm unreachable.");
+        finishMessage("<b style='color: #ff3333;'>[Local API Error]</b> Could not reach localhost:8080. Ensure the Obsidian Node is running.");
     }
 
     function finishMessage(finalHtml) {

@@ -3,6 +3,7 @@ pub mod mcts;
 pub mod rlaif;
 pub mod corpus;
 pub mod trainer_daemon;
+pub mod api;
 
 use std::error::Error;
 use split_brain::{ComplexityEvaluator, HeuristicEvaluator, RouteDecision};
@@ -12,32 +13,26 @@ use tokio::task;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     println!("Starting Obsidian Node...");
+    println!("Starting local P2P swarm node...");
     
-    // Spawn the background RLAIF data synthesis engine
+    // Spawn Background Autonomous Data Generator
     task::spawn(async {
         rlaif::run_idle_cycles().await;
     });
-    
-    // Initialize the Split-Brain Router
+
     let evaluator = HeuristicEvaluator;
     
-    let complex_query = "fn calculate_derivative(matrix_x: Vec<f32>) { return matrix_x + 1.0; }";
-    println!("\n[Split-Brain] Evaluating Query: '{}'", complex_query);
-    route_query(&evaluator, complex_query);
-    
-    // Simulate Network Gradient Sync
-    println!("\n[Network Sync] Listening for Swarm Gradient Updates...");
-    let device = candle_core::Device::Cpu;
-    let mut simulated_peers = Vec::new();
-    
-    // Generate simulated gradient vectors from the mesh
-    simulated_peers.push(candle_core::Tensor::randn(0f32, 1f32, (4, 4), &device)?); // Good Peer
-    simulated_peers.push(candle_core::Tensor::randn(0f32, 1f32, (4, 4), &device)?); // Good Peer
-    simulated_peers.push(candle_core::Tensor::randn(100f32, 50f32, (4, 4), &device)?); // Malicious Peer (Massive Anomaly)
+    // Test the Split-Brain Router
+    let prompt1 = "Hello, what is your status?";
+    match evaluator.evaluate_complexity(prompt1) {
+        RouteDecision::LocalReflex => println!("Query 1 routed to Local Ternary Reflex Engine."),
+        RouteDecision::GlobalSwarm => println!("Query 1 routed to Decentralized Swarm."),
+    }
 
-    let filter = obsidian_ml::aggregation::ByzantineFilter::new(1.5);
-    if let Ok(_safe_update) = filter.filter_and_aggregate(simulated_peers) {
-        println!("[Network Sync] Sovereign local model state successfully updated via Federated Learning.");
+    let prompt2 = "Calculate the prime factorization of 1204812.";
+    match evaluator.evaluate_complexity(prompt2) {
+        RouteDecision::LocalReflex => println!("Query 2 routed to Local Ternary Reflex Engine."),
+        RouteDecision::GlobalSwarm => println!("Query 2 routed to Decentralized Swarm."),
     }
     
     // Block main thread to allow the background RLAIF loops to run
@@ -46,9 +41,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Execute Full Training Phase
     trainer_daemon::run_training_loop().await;
     
-    println!("\nObsidian Node Shutting Down (PoC completed successfully).");
+    // Spawn Web API Server
+    task::spawn(async {
+        api::start_server().await;
+    });
     
-    Ok(())
+    println!("\nObsidian Daemon is now running indefinitely. Awaiting federated training cycles...");
+    loop {
+        tokio::time::sleep(tokio::time::Duration::from_secs(3600)).await;
+    }
 }
 
 fn route_query(evaluator: &impl ComplexityEvaluator, query: &str) {
