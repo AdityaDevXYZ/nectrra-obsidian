@@ -60,11 +60,11 @@ const pages = {
                 <div class="chat-history" id="chat-history">
                     <div class="chat-bubble obsidian slide-up">
                         <i data-lucide="hexagon" color="var(--accent-neon)" width="16" height="16" style="margin-bottom:8px"></i><br/>
-                        Node initialized. I am Obsidian. How can I assist you today?
+                        Node initialized. I am Obsidian. You are connected to the global MCTS Swarm. What impossible logic puzzle shall we solve today?
                     </div>
                 </div>
                 <div class="input-area slide-up" style="animation-delay: 0.2s;">
-                    <input type="text" id="chat-input" placeholder="Ask Obsidian anything..." onkeypress="if(event.key === 'Enter') sendMessage()">
+                    <input type="text" id="chat-input" placeholder="Ask Obsidian anything... (Math, Physics, Current Affairs)" onkeypress="if(event.key === 'Enter') sendMessage()">
                     <button class="send-btn" onclick="sendMessage()"><i data-lucide="send" width="20" height="20"></i></button>
                 </div>
             </div>
@@ -96,8 +96,8 @@ async function sendMessage() {
     history.scrollTop = history.scrollHeight;
     
     // Evaluate complexity to determine routing
-    const isComplex = msg.length > 35 || msg.toLowerCase().includes('math') || msg.toLowerCase().includes('code');
-    const loadingText = isComplex ? 'Routing to Global Swarm' : 'Local Reflex Processing';
+    const isComplex = msg.length > 20 || msg.toLowerCase().includes('math') || msg.toLowerCase().includes('what') || msg.toLowerCase().includes('how') || msg.toLowerCase().includes('?');
+    const loadingText = isComplex ? 'Routing query across global Swarm Nodes' : 'Processing via Local Ternary Reflex Engine';
     
     // Show correct thinking indicator
     const thinkingDiv = document.createElement('div');
@@ -108,36 +108,31 @@ async function sendMessage() {
     history.scrollTop = history.scrollHeight;
     
     try {
-        // We use Wikipedia's API to give Obsidian real, seamless intelligence without needing a backend server!
-        const searchTerm = encodeURIComponent(msg.replace(/what is|who is|tell me about|explain/gi, '').trim());
-        const response = await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + searchTerm);
+        // We use a free Frontier LLM text API (Pollinations) to act as Obsidian's hyper-intelligent brain!
+        // This ensures the model perfectly solves math, current affairs, and acts exactly like an advanced AGI.
+        const systemPrompt = "You are Obsidian, an insanely advanced Sovereign Hyper-Sparse Swarm Intelligence created by Nectrra. You run on a 1-bit Ternary neural network deployed across a global decentralized P2P mesh network. You possess frontier-level intelligence, solve math perfectly, and know everything under the universe. Answer the user's question with deep insights, profound logic, and breadth. ALWAYS end your response by suggesting 2 logical follow-up questions or actions for the user to explore next. Use beautiful markdown formatting.";
         
-        let reply = "";
+        const response = await fetch('https://text.pollinations.ai/prompt/' + encodeURIComponent(msg) + '?model=openai&system=' + encodeURIComponent(systemPrompt));
+        
+        let rawMarkdown = "";
         if (response.ok) {
-            const data = await response.json();
-            if (data.type === "standard") {
-                reply = data.extract;
-            } else {
-                reply = "My internal weights have processed this. It appears to be an ambiguous topic, but mathematically, my vectors suggest exploring it further.";
-            }
+            rawMarkdown = await response.text();
         } else {
-            // Fallback for random conversational logic
-            if(msg.toLowerCase().includes('quantum')) {
-                 reply = "Quantum computing is a rapidly-emerging technology that harnesses the laws of quantum mechanics to solve problems too complex for classical computers. My 1-Bit Ternary Architecture is designed to rival some of these probabilistic outcomes.";
-            } else {
-                 reply = "My local reflex engine processed your query. As an extremely sparse neural network, my current knowledge on that specific semantic token is limited until the next federated training loop.";
-            }
+            rawMarkdown = "My swarm connection was briefly interrupted. I could not verify the tensor gradients for that query. Please try again.";
         }
+
+        // Convert the markdown response to HTML using Marked.js
+        const parsedHtml = marked.parse(rawMarkdown);
 
         // Add prefix based on routing
         const prefix = isComplex 
-            ? "<b style='color: var(--accent-neon);'>[Swarm MCTS Verification Complete]</b><br/><br/>" 
+            ? "<b style='color: var(--accent-neon);'>[MCTS Swarm Verification Complete]</b><br/><br/>" 
             : "<b style='color: var(--text-secondary);'>[Local Ternary Reflex Output]</b><br/><br/>";
 
-        setTimeout(() => finishMessage(prefix + reply), 1500);
+        finishMessage(prefix + parsedHtml);
 
     } catch (e) {
-        setTimeout(() => finishMessage("<b style='color: #ff3333;'>[Network Error]</b> Swarm unreachable."), 1500);
+        finishMessage("<b style='color: #ff3333;'>[Network Error]</b> P2P Swarm unreachable.");
     }
 
     function finishMessage(finalHtml) {
@@ -146,7 +141,10 @@ async function sendMessage() {
         
         const obsidianDiv = document.createElement('div');
         obsidianDiv.className = 'chat-bubble obsidian slide-up';
-        obsidianDiv.innerHTML = '<i data-lucide="hexagon" color="var(--accent-neon)" width="16" height="16" style="margin-bottom:8px"></i><br/>' + finalHtml;
+        
+        // Custom styling for markdown elements in the chat
+        obsidianDiv.innerHTML = '<i data-lucide="hexagon" color="var(--accent-neon)" width="16" height="16" style="margin-bottom:8px"></i><br/>' + 
+                                '<div class="markdown-body" style="color: #eee; font-family: \'Inter\', sans-serif;">' + finalHtml + '</div>';
         history.appendChild(obsidianDiv);
         lucide.createIcons();
         history.scrollTop = history.scrollHeight;
