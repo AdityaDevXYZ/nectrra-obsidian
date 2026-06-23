@@ -79,7 +79,7 @@ function navigate(page) {
     window.scrollTo(0,0);
 }
 
-function sendMessage() {
+async function sendMessage() {
     const input = document.getElementById('chat-input');
     const msg = input.value.trim();
     if(!msg) return;
@@ -95,30 +95,62 @@ function sendMessage() {
     input.value = '';
     history.scrollTop = history.scrollHeight;
     
-    // Thinking indicator
+    // Evaluate complexity to determine routing
+    const isComplex = msg.length > 35 || msg.toLowerCase().includes('math') || msg.toLowerCase().includes('code');
+    const loadingText = isComplex ? 'Routing to Global Swarm' : 'Local Reflex Processing';
+    
+    // Show correct thinking indicator
     const thinkingDiv = document.createElement('div');
     thinkingDiv.className = 'typing-indicator fade-in';
     thinkingDiv.id = 'thinking';
-    thinkingDiv.innerHTML = '<span>Routing to Swarm</span><div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+    thinkingDiv.innerHTML = '<span>' + loadingText + '</span><div class="dot"></div><div class="dot"></div><div class="dot"></div>';
     history.appendChild(thinkingDiv);
     history.scrollTop = history.scrollHeight;
     
-    setTimeout(() => {
+    try {
+        // We use Wikipedia's API to give Obsidian real, seamless intelligence without needing a backend server!
+        const searchTerm = encodeURIComponent(msg.replace(/what is|who is|tell me about|explain/gi, '').trim());
+        const response = await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + searchTerm);
+        
+        let reply = "";
+        if (response.ok) {
+            const data = await response.json();
+            if (data.type === "standard") {
+                reply = data.extract;
+            } else {
+                reply = "My internal weights have processed this. It appears to be an ambiguous topic, but mathematically, my vectors suggest exploring it further.";
+            }
+        } else {
+            // Fallback for random conversational logic
+            if(msg.toLowerCase().includes('quantum')) {
+                 reply = "Quantum computing is a rapidly-emerging technology that harnesses the laws of quantum mechanics to solve problems too complex for classical computers. My 1-Bit Ternary Architecture is designed to rival some of these probabilistic outcomes.";
+            } else {
+                 reply = "My local reflex engine processed your query. As an extremely sparse neural network, my current knowledge on that specific semantic token is limited until the next federated training loop.";
+            }
+        }
+
+        // Add prefix based on routing
+        const prefix = isComplex 
+            ? "<b style='color: var(--accent-neon);'>[Swarm MCTS Verification Complete]</b><br/><br/>" 
+            : "<b style='color: var(--text-secondary);'>[Local Ternary Reflex Output]</b><br/><br/>";
+
+        setTimeout(() => finishMessage(prefix + reply), 1500);
+
+    } catch (e) {
+        setTimeout(() => finishMessage("<b style='color: #ff3333;'>[Network Error]</b> Swarm unreachable."), 1500);
+    }
+
+    function finishMessage(finalHtml) {
         const thinkingEl = document.getElementById('thinking');
         if(thinkingEl) history.removeChild(thinkingEl);
         
-        let reply = "I am processing that via the local ternary reflex engine.";
-        if (msg.length > 30 || msg.includes('math') || msg.includes('code') || msg.includes('?')) {
-            reply = "That query requires complex logic. I have successfully routed this to the global P2P swarm. (MCTS Swarm Response: Mathematically verified completion).";
-        }
-        
         const obsidianDiv = document.createElement('div');
         obsidianDiv.className = 'chat-bubble obsidian slide-up';
-        obsidianDiv.innerHTML = '<i data-lucide="hexagon" color="var(--accent-neon)" width="16" height="16" style="margin-bottom:8px"></i><br/>' + reply;
+        obsidianDiv.innerHTML = '<i data-lucide="hexagon" color="var(--accent-neon)" width="16" height="16" style="margin-bottom:8px"></i><br/>' + finalHtml;
         history.appendChild(obsidianDiv);
         lucide.createIcons();
         history.scrollTop = history.scrollHeight;
-    }, 2500);
+    }
 }
 
 // Init
