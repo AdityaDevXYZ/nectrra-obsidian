@@ -6,8 +6,7 @@ edition = "2024"
 [dependencies]
 obsidian-p2p = { path = "../obsidian-p2p" }
 obsidian-ml = { path = "../obsidian-ml" }
-tokio = { version = "1.37", features = ["full"] }
-axum = "0.7.5"
+tokio = { version = "1.37", features = ["rt", "rt-multi-thread", "macros", "time"] }
+tiny_http = "0.12"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tower-http = { version = "0.5.2", features = ["cors"] }

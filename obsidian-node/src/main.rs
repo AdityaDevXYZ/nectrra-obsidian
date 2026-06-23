@@ -41,9 +41,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Execute Full Training Phase
     trainer_daemon::run_training_loop().await;
     
-    // Spawn Web API Server
-    task::spawn(async {
-        api::start_server().await;
+    // Spawn Web API Server in a dedicated system thread (blocking)
+    std::thread::spawn(move || {
+        api::start_server();
     });
     
     println!("\nObsidian Daemon is now running indefinitely. Awaiting federated training cycles...");
