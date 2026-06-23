@@ -2,26 +2,30 @@ use candle_core::{Tensor, Device, Error, Shape};
 
 /// Represents extremely sparse weights restricted to {-1, 0, 1}
 pub struct TernaryWeight {
-    weights: Tensor, 
+    pub weights: Tensor, 
+    pub latent_weights: Tensor, // Hidden high-precision weights for STE training
 }
 
 impl TernaryWeight {
     pub fn new(shape: impl Into<Shape>, device: &Device) -> Result<Self, Error> {
         // Initialize weights simulating 1-bit quantization.
-        let rand_t = Tensor::randn(0f32, 1f32, shape, device)?;
-        let ones = Tensor::ones_like(&rand_t)?;
+        let latent = Tensor::randn(0f32, 1f32, shape, device)?;
+        let ones = Tensor::ones_like(&latent)?;
         let neg_ones = (&ones * -1.0)?;
-        let zeros = Tensor::zeros_like(&rand_t)?;
+        let zeros = Tensor::zeros_like(&latent)?;
         
         // Quantize randomly to -1, 0, 1
-        let t_pos = rand_t.ge(&0.5f32)?;
-        let t_neg = rand_t.le(&-0.5f32)?;
+        let t_pos = latent.ge(&0.5f32)?;
+        let t_neg = latent.le(&-0.5f32)?;
         
         let mut t = zeros;
         t = t_pos.where_cond(&ones, &t)?;
         t = t_neg.where_cond(&neg_ones, &t)?;
         
-        Ok(Self { weights: t })
+        Ok(Self { 
+            weights: t,
+            latent_weights: latent,
+        })
     }
 
     /// Optimized forward pass: mathematically constrained to addition/subtraction

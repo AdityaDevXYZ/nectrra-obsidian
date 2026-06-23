@@ -2,6 +2,7 @@ pub mod split_brain;
 pub mod mcts;
 pub mod rlaif;
 pub mod corpus;
+pub mod trainer_daemon;
 
 use std::error::Error;
 use split_brain::{ComplexityEvaluator, HeuristicEvaluator, RouteDecision};
@@ -41,6 +42,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     
     // Block main thread to allow the background RLAIF loops to run
     tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
+    
+    // Execute Full Training Phase
+    trainer_daemon::run_training_loop().await;
+    
     println!("\nObsidian Node Shutting Down (PoC completed successfully).");
     
     Ok(())

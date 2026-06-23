@@ -1,6 +1,7 @@
 pub mod ternary;
 pub mod ssm;
 pub mod aggregation;
+pub mod training;
 
 use candle_core::{Device, Tensor};
 use ssm::SsmStep;
