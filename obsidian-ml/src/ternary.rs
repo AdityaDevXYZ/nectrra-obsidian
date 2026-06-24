@@ -15,8 +15,8 @@ impl TernaryWeight {
         let zeros = Tensor::zeros_like(&latent)?;
         
         // Quantize randomly to -1, 0, 1
-        let t_pos = latent.ge(&0.5f32)?;
-        let t_neg = latent.le(&-0.5f32)?;
+        let t_pos = latent.ge(0.5f32)?;
+        let t_neg = latent.le(-0.5f32)?;
         
         let mut t = zeros;
         t = t_pos.where_cond(&ones, &t)?;
