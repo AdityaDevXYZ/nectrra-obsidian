@@ -61,7 +61,8 @@ impl SwarmTree {
         }
         
         // 2. Swarm Simulation on a child
-        let mut child = root.children[0].lock().unwrap();
+        let child_arc = root.children[0].clone();
+        let mut child = child_arc.lock().unwrap();
         let reward = self.decentralized_simulate(&mut child);
         
         // 3. Backpropagation

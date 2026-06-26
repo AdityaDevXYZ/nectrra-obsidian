@@ -1,6 +1,5 @@
 use tiny_http::{Server, Response, Header, Method};
 use serde::{Deserialize, Serialize};
-use std::io::Read;
 use crate::split_brain::{ComplexityEvaluator, HeuristicEvaluator, RouteDecision};
 
 #[derive(Deserialize)]
