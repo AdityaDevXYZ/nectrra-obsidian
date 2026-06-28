@@ -13,7 +13,7 @@ impl Trainer {
     }
 
     /// Simulates a single forward-backward pass using STE
-    pub fn train_epoch(&mut self, _weight: &mut TernaryWeight, _input: &Tensor, _target: &Tensor) -> Result<f32, Error> {
+    pub fn train_epoch(&mut self, _model: &mut crate::model::ObsidianLLM, _input: &Tensor, _target: &Tensor) -> Result<f32, Error> {
         self.epoch_count += 1;
         
         // In a true implementation, this calculates standard gradients against the `latent_weights`,

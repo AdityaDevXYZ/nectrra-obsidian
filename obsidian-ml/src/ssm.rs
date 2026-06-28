@@ -20,7 +20,7 @@ impl SsmStep {
         })
     }
 
-    /// h_t = A * h_{t-1} + B * x_t
+    /// h_t = SiLU(A * h_{t-1} + B * x_t)
     /// y_t = C * h_t
     pub fn forward_step(&self, x_t: &Tensor, h_prev: &Tensor) -> Result<(Tensor, Tensor), Error> {
         // 1. Input influence: B * x_t
@@ -29,8 +29,9 @@ impl SsmStep {
         // 2. Hidden state transition: A * h_{t-1}
         let state_transition = self.a_proj.forward_simulate_add(h_prev)?;
         
-        // 3. New hidden state: h_t = A * h_{t-1} + B * x_t
-        let h_t = state_transition.broadcast_add(&input_influence)?;
+        // 3. New hidden state: h_t = SiLU(A * h_{t-1} + B * x_t)
+        let h_raw = state_transition.broadcast_add(&input_influence)?;
+        let h_t = candle_nn::ops::silu(&h_raw)?;
         
         // 4. Output projection: y_t = C * h_t
         let y_t = self.c_proj.forward_simulate_add(&h_t)?;

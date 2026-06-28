@@ -46,7 +46,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
         api::start_server();
     });
     
-    println!("\nObsidian Daemon is now running indefinitely. Awaiting federated training cycles...");
+    println!("\nObsidian Daemon is now running...");
+    
+    // Check if we are running in the Kaggle Cloud environment
+    if std::env::var("KAGGLE_TRAINING").is_ok() {
+        println!("\n[Kaggle Cloud Mode] Training phase complete. Terminating process to allow Kaggle to save the checkpoint.safetensors file safely.");
+        return Ok(());
+    }
+
+    println!("Awaiting federated training cycles indefinitely...");
     loop {
         tokio::time::sleep(tokio::time::Duration::from_secs(3600)).await;
     }

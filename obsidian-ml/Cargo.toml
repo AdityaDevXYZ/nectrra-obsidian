@@ -6,3 +6,4 @@ edition = "2024"
 [dependencies]
 candle-core = "0.4.1"
 candle-nn = "0.4.1"
+tokenizers = "0.19.1"
