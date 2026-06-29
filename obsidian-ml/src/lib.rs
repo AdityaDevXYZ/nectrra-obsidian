@@ -14,7 +14,9 @@ pub fn dummy_inference() -> Result<(), candle_core::Error> {
     let hidden_dim = 32;
     
     println!("Initializing Ternary State Space Model (O(1) memory context)...");
-    let ssm = SsmStep::new(input_dim, hidden_dim, &device)?;
+    let varmap = candle_nn::VarMap::new();
+    let vb = candle_nn::VarBuilder::from_varmap(&varmap, candle_core::DType::F32, &device);
+    let ssm = SsmStep::new(input_dim, hidden_dim, vb.pp("ssm"))?;
     
     // Initial hidden state h_0
     let mut h_t = Tensor::zeros((1, hidden_dim), candle_core::DType::F32, &device)?;
