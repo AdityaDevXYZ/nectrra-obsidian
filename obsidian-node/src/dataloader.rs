@@ -10,20 +10,17 @@ pub struct ObsidianDataLoader {
 }
 
 impl ObsidianDataLoader {
-    pub fn new(dataset_path: &str, tokenizer_path: &str, seq_len: usize) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new(dataset_path: &str, tokenizer_path: &str, seq_len: usize) -> Result<Self, String> {
         // 1. Initialize the massive HuggingFace Tokenizer
         let tokenizer = if Path::new(tokenizer_path).exists() {
-            Tokenizer::from_file(tokenizer_path)?
+            Tokenizer::from_file(tokenizer_path).map_err(|e| e.to_string())?
         } else {
-            // Fallback for local testing if the massive tokenizer.json isn't downloaded yet
-            println!("[DataLoader] Warning: No tokenizer.json found. Initializing Dummy Tokenizer...");
-            let mut dummy = tokenizers::TokenizerBuilder::new().build()?;
-            dummy
+            return Err("Kaggle Tokenizer JSON not found!".to_string());
         };
         
         // 2. Load the unified dataset (FineWeb + TinyStories)
         let text = if Path::new(dataset_path).exists() {
-            fs::read_to_string(dataset_path)?
+            fs::read_to_string(dataset_path).map_err(|e| e.to_string())?
         } else {
             println!("[DataLoader] Warning: No dataset found. Falling back to synthetic logic testing.");
             "Obsidian is a highly advanced Artificial General Intelligence capable of deep reasoning. It processes neural branches simultaneously.".to_string()
