@@ -1,4 +1,5 @@
 use candle_core::{Tensor, Device, Error};
+use candle_nn::VarBuilder;
 use crate::ternary::TernaryWeight;
 
 /// A single step in a State Space Model recurrence
@@ -9,14 +10,14 @@ pub struct SsmStep {
 }
 
 impl SsmStep {
-    pub fn new(input_dim: usize, hidden_dim: usize, device: &Device) -> Result<Self, Error> {
+    pub fn new(input_dim: usize, hidden_dim: usize, vb: VarBuilder) -> Result<Self, Error> {
         Ok(Self {
             // A matrix: hidden_dim -> hidden_dim
-            a_proj: TernaryWeight::new((hidden_dim, hidden_dim), device)?,
+            a_proj: TernaryWeight::new((hidden_dim, hidden_dim), vb.pp("a_proj"))?,
             // B matrix: input_dim -> hidden_dim
-            b_proj: TernaryWeight::new((input_dim, hidden_dim), device)?,
+            b_proj: TernaryWeight::new((input_dim, hidden_dim), vb.pp("b_proj"))?,
             // C matrix: hidden_dim -> input_dim (or output dim)
-            c_proj: TernaryWeight::new((hidden_dim, input_dim), device)?,
+            c_proj: TernaryWeight::new((hidden_dim, input_dim), vb.pp("c_proj"))?,
         })
     }
 

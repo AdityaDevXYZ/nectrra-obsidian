@@ -1,8 +1,9 @@
 use candle_core::{Tensor, Device, Error};
-use candle_nn::{Embedding, Linear, VarBuilder, Module};
+use candle_nn::{Embedding, Linear, VarBuilder, VarMap, Module};
 use crate::ssm::SsmStep;
 
 pub struct ObsidianLLM {
+    pub varmap: VarMap,
     pub embedding: Embedding,
     pub layers: Vec<SsmStep>,
     pub lm_head: Linear,
@@ -12,19 +13,19 @@ pub struct ObsidianLLM {
 
 impl ObsidianLLM {
     pub fn new(vocab_size: usize, hidden_dim: usize, num_layers: usize, device: &Device) -> Result<Self, Error> {
-        // Initialize dummy embedding and lm_head for architectural testing
-        // In a real scenario, these would be loaded from a VarBuilder with trained weights
-        let vb = VarBuilder::zeros(candle_core::DType::F32, device);
+        let varmap = VarMap::new();
+        let vb = VarBuilder::from_varmap(&varmap, candle_core::DType::F32, device);
         
         let embedding = candle_nn::embedding(vocab_size, hidden_dim, vb.pp("embedding"))?;
         let lm_head = candle_nn::linear_no_bias(hidden_dim, vocab_size, vb.pp("lm_head"))?;
         
         let mut layers = Vec::new();
-        for _ in 0..num_layers {
-            layers.push(SsmStep::new(hidden_dim, hidden_dim, device)?);
+        for i in 0..num_layers {
+            layers.push(SsmStep::new(hidden_dim, hidden_dim, vb.pp(&format!("ssm_layer_{}", i)))?);
         }
         
         Ok(Self {
+            varmap,
             embedding,
             layers,
             lm_head,
@@ -70,21 +71,17 @@ impl ObsidianLLM {
 
     /// Serializes the model weights to a .safetensors file for Kaggle checkpointing
     pub fn save_checkpoint(&self, path: &str) -> Result<(), Error> {
-        // In a real implementation, this collects all Tensor weights from the layers
-        // and uses candle_core::safetensors::save(&hashmap, path)
-        println!("[ObsidianLLM] Serializing weights to {}...", path);
-        // Simulate writing file
-        let dummy = std::fs::write(path, "safetensors_mock_data");
-        if dummy.is_ok() {
-            println!("[ObsidianLLM] Checkpoint saved successfully.");
-        }
+        println!("[ObsidianLLM] Serializing true tracked weights to {}...", path);
+        self.varmap.save(path)?;
+        println!("[ObsidianLLM] Checkpoint saved successfully.");
         Ok(())
     }
 
     /// Loads the model weights from a .safetensors file to resume Kaggle training
     pub fn load_checkpoint(&mut self, path: &str) -> Result<(), Error> {
-        // In a real implementation, this uses candle_core::safetensors::load(path)
-        println!("[ObsidianLLM] Restoring weights from {}...", path);
+        println!("[ObsidianLLM] Restoring true tracked weights from {}...", path);
+        self.varmap.load(path)?;
+        println!("[ObsidianLLM] Checkpoint restored successfully.");
         Ok(())
     }
 }

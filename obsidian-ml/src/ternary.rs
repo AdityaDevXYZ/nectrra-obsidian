@@ -1,5 +1,7 @@
 use candle_core::{Tensor, Device, Error, Shape};
 
+use candle_nn::{VarBuilder, Init};
+
 /// Represents extremely sparse weights restricted to {-1, 0, 1}
 pub struct TernaryWeight {
     pub weights: Tensor, 
@@ -7,9 +9,15 @@ pub struct TernaryWeight {
 }
 
 impl TernaryWeight {
-    pub fn new(shape: impl Into<Shape>, device: &Device) -> Result<Self, Error> {
-        // Initialize weights simulating 1-bit quantization.
-        let latent = Tensor::randn(0f32, 1f32, shape, device)?;
+    pub fn new(shape: impl Into<Shape>, vb: VarBuilder) -> Result<Self, Error> {
+        // Initialize weights using VarBuilder so they are tracked for Safetensors serialization
+        let shape = shape.into();
+        let latent = vb.get_with_hints(
+            shape.clone(),
+            "latent",
+            Init::Randn { mean: 0.0, stdev: 1.0 },
+        )?;
+        
         let ones = Tensor::ones_like(&latent)?;
         let neg_ones = (&ones * -1.0)?;
         let zeros = Tensor::zeros_like(&latent)?;
