@@ -13,6 +13,14 @@ pub async fn run_training_loop() {
     // Initialize our massive LLM Architecture
     let mut llm = ObsidianLLM::new(100_000, 256, 4, &device).expect("Failed to init LLM");
     
+    // Initialize the Phase 1 Data Pipeline
+    // Path for Kaggle: /kaggle/working/dataset.txt and tokenizer.json
+    let mut dataloader = crate::dataloader::ObsidianDataLoader::new(
+        "/kaggle/working/dataset.txt", 
+        "/kaggle/working/tokenizer.json", 
+        16 // Sequence length
+    ).expect("Failed to initialize DataLoader");
+
     let checkpoint_path = "/kaggle/working/checkpoint.safetensors";
     
     // Auto-Resume logic
@@ -23,19 +31,28 @@ pub async fn run_training_loop() {
         println!("[Trainer Daemon] No checkpoint found. Starting pre-training from scratch.");
     }
     
-    println!("[Trainer Daemon] Beginning training loop for 14,500 epochs...");
+    println!("[Trainer Daemon] Beginning training loop over real benchmark datasets...");
     
     // Track execution time to prevent Kaggle 12-hour forced termination
     let start_time = Instant::now();
-    // 11 hours and 45 minutes = 42300 seconds. We'll use 3 seconds for testing if you want, 
-    // but the final script uses 42300.
     let kaggle_time_limit_secs = 42300; 
 
     // Run training over 14,500 epochs
     for epoch in 1..=14500 {
-        // Generate batch tensors representing tokenized data
-        let input_batch = Tensor::randn(0f32, 1f32, (1, 16), &device).unwrap();
-        let target_batch = Tensor::randn(0f32, 1f32, (1, 16), &device).unwrap();
+        // Fetch real tokens from the hard drive
+        let (input_tokens, target_tokens) = match dataloader.next_batch() {
+            Some(batch) => batch,
+            None => {
+                println!("[Trainer Daemon] Dataset epoch complete. Restarting stream...");
+                // Loop back to the beginning of the text
+                let _ = dataloader.next_batch(); 
+                continue;
+            }
+        };
+        
+        // Convert [u32] slices to Tensors [batch_size=1, seq_len]
+        let input_batch = Tensor::new(input_tokens.as_slice(), &device).unwrap().unsqueeze(0).unwrap();
+        let target_batch = Tensor::new(target_tokens.as_slice(), &device).unwrap().unsqueeze(0).unwrap();
         
         // Execute the backward pass
         let loss = trainer.train_epoch(&mut llm, &input_batch, &target_batch).unwrap();

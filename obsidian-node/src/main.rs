@@ -2,6 +2,7 @@ pub mod split_brain;
 pub mod mcts;
 pub mod rlaif;
 pub mod corpus;
+pub mod dataloader;
 pub mod trainer_daemon;
 pub mod api;
 
