@@ -50,16 +50,18 @@ pub fn start_server() {
                         // Read the secure HuggingFace API token from the cloud environment
                         let hf_token = std::env::var("HF_TOKEN").unwrap_or_else(|_| "".to_string());
                         
+                        // Use the Bulletproof OpenAI-Compatible Endpoint for HuggingFace!
+                        // This guarantees support for massive models like Qwen2.5-72B
                         let hf_req = serde_json::json!({
-                            "inputs": payload.prompt,
-                            "parameters": {
-                                "max_new_tokens": 250,
-                                "temperature": 0.7
-                            }
+                            "model": "Qwen/Qwen2.5-72B-Instruct",
+                            "messages": [
+                                {"role": "user", "content": payload.prompt}
+                            ],
+                            "max_tokens": 500,
+                            "temperature": 0.7
                         });
 
-                        // Route to Qwen2.5-7B-Instruct (The 72B model is too large for the free tier!)
-                        let response = client.post("https://router.huggingface.co/hf-inference/models/Qwen/Qwen2.5-7B-Instruct")
+                        let response = client.post("https://router.huggingface.co/hf-inference/v1/chat/completions")
                             .header("Authorization", format!("Bearer {}", hf_token))
                             .json(&hf_req)
                             .send();
@@ -67,34 +69,26 @@ pub fn start_server() {
                         let output = match response {
                             Ok(res) => {
                                 if let Ok(json) = res.json::<serde_json::Value>() {
-                                    // HuggingFace returns an array: [{"generated_text": "..."}]
-                                    if let Some(arr) = json.as_array() {
-                                        if let Some(first) = arr.get(0) {
-                                            first["generated_text"].as_str().unwrap_or("Error parsing HuggingFace response").to_string()
+                                    // Parse OpenAI standard response: choices[0].message.content
+                                    if let Some(choices) = json["choices"].as_array() {
+                                        if let Some(first) = choices.get(0) {
+                                            first["message"]["content"].as_str().unwrap_or("Error parsing chat message").to_string()
                                         } else {
-                                            "Empty response array from HuggingFace".to_string()
+                                            "Empty choices array".to_string()
                                         }
                                     } else {
-                                        // Sometimes it returns an error object: {"error": "..."}
-                                        json["error"].as_str().unwrap_or("Failed to parse JSON array").to_string()
+                                        json["error"].as_str().unwrap_or("API returned an unexpected JSON structure").to_string()
                                     }
                                 } else {
-                                    "Failed to parse HuggingFace JSON".to_string()
+                                    "Failed to parse JSON response".to_string()
                                 }
                             },
                             Err(e) => format!("**SYSTEM ERROR:** Could not reach HuggingFace API. Details: {}", e),
                         };
                         
-                        // Clean up the prompt from the generated text if HuggingFace repeats it
-                        let clean_output = if output.starts_with(&payload.prompt) {
-                            output[payload.prompt.len()..].trim().to_string()
-                        } else {
-                            output
-                        };
-                        
                         let formatted_output = format!(
                             "**Qwen2.5 72B Cloud Core:**\n{}",
-                            clean_output
+                            output.trim()
                         );
                         
                         (formatted_output, false)
