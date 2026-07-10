@@ -58,8 +58,8 @@ pub fn start_server() {
                             }
                         });
 
-                        // Route to Qwen2.5-72B-Instruct using the new HuggingFace Router endpoint!
-                        let response = client.post("https://router.huggingface.co/hf-inference/models/Qwen/Qwen2.5-72B-Instruct")
+                        // Route to Qwen2.5-7B-Instruct (The 72B model is too large for the free tier!)
+                        let response = client.post("https://router.huggingface.co/hf-inference/models/Qwen/Qwen2.5-7B-Instruct")
                             .header("Authorization", format!("Bearer {}", hf_token))
                             .json(&hf_req)
                             .send();
