@@ -17,7 +17,7 @@ export default function ChatInterface() {
     setIsThinking(true)
 
     try {
-      const response = await fetch('https://dirty-houses-ring.loca.lt/query', {
+      const response = await fetch('https://little-moons-relax.loca.lt/query', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
