@@ -82,7 +82,7 @@ pub fn start_server() {
                                     "Failed to parse HuggingFace JSON".to_string()
                                 }
                             },
-                            Err(_) => "**SYSTEM ERROR:** Could not reach HuggingFace API. Is the server offline?".to_string(),
+                            Err(e) => format!("**SYSTEM ERROR:** Could not reach HuggingFace API. Details: {}", e),
                         };
                         
                         // Clean up the prompt from the generated text if HuggingFace repeats it
