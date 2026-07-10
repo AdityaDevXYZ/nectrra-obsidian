@@ -62,6 +62,7 @@ pub fn start_server() {
                         });
 
                         let response = client.post("https://openrouter.ai/api/v1/chat/completions")
+                            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Nectrra/1.0") // Bypass Cloudflare
                             .header("Authorization", format!("Bearer {}", openrouter_token))
                             .header("HTTP-Referer", "https://nectrra.com") // Recommended by OpenRouter
                             .header("X-Title", "Nectrra Neural Mesh") // Recommended by OpenRouter
@@ -70,7 +71,10 @@ pub fn start_server() {
 
                         let output = match response {
                             Ok(res) => {
-                                if let Ok(json) = res.json::<serde_json::Value>() {
+                                let status = res.status();
+                                let raw_text = res.text().unwrap_or_else(|_| "Failed to read response body".to_string());
+                                
+                                if let Ok(json) = serde_json::from_str::<serde_json::Value>(&raw_text) {
                                     // Parse OpenAI standard response: choices[0].message.content
                                     if let Some(choices) = json["choices"].as_array() {
                                         if let Some(first) = choices.get(0) {
@@ -79,10 +83,10 @@ pub fn start_server() {
                                             "Empty choices array".to_string()
                                         }
                                     } else {
-                                        json["error"]["message"].as_str().unwrap_or("API returned an unexpected JSON structure").to_string()
+                                        json["error"]["message"].as_str().unwrap_or(&format!("API Error (Status {}): {}", status, raw_text)).to_string()
                                     }
                                 } else {
-                                    "Failed to parse JSON response".to_string()
+                                    format!("Failed to parse JSON. HTTP {}. Raw Response: {}", status, raw_text)
                                 }
                             },
                             Err(e) => format!("**SYSTEM ERROR:** Could not reach OpenRouter API. Details: {}", e),
