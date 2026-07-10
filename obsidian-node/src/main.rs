@@ -70,9 +70,7 @@ fn route_query(evaluator: &impl ComplexityEvaluator, query: &str) {
     match evaluator.evaluate_complexity(query) {
         RouteDecision::LocalReflex => {
             println!(" -> Decision: LOCAL.");
-            if let Err(e) = obsidian_ml::dummy_inference() {
-                eprintln!("Failed to run local inference: {}", e);
-            }
+            println!("Local training disabled in Cloud API mode.");
         }
         RouteDecision::GlobalSwarm => {
             println!(" -> Decision: GLOBAL SWARM.");
