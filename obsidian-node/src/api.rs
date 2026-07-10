@@ -47,13 +47,11 @@ pub fn start_server() {
                         
                         let client = reqwest::blocking::Client::new();
                         
-                        // Read the secure OpenRouter API token from the cloud environment
-                        let openrouter_token = std::env::var("OPENROUTER_API_KEY").unwrap_or_else(|_| "".to_string());
+                        let groq_token = std::env::var("GROQ_API_KEY").unwrap_or_else(|_| "".to_string());
                         
-                        // Use the Bulletproof Commercial OpenRouter API
-                        // We use Llama 3.1 8B Free because OpenRouter's 72B Qwen model was routing to a broken upstream server!
+                        // Use the Bulletproof Commercial Groq API (Lightning Fast & Free)
                         let api_req = serde_json::json!({
-                            "model": "meta-llama/llama-3.1-8b-instruct:free",
+                            "model": "llama-3.1-8b-instant",
                             "messages": [
                                 {"role": "user", "content": payload.prompt}
                             ],
@@ -61,11 +59,9 @@ pub fn start_server() {
                             "temperature": 0.7
                         });
 
-                        let response = client.post("https://openrouter.ai/api/v1/chat/completions")
-                            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Nectrra/1.0") // Bypass Cloudflare
-                            .header("Authorization", format!("Bearer {}", openrouter_token))
-                            .header("HTTP-Referer", "https://nectrra.com") // Recommended by OpenRouter
-                            .header("X-Title", "Nectrra Neural Mesh") // Recommended by OpenRouter
+                        let response = client.post("https://api.groq.com/openai/v1/chat/completions")
+                            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Nectrra/1.0") 
+                            .header("Authorization", format!("Bearer {}", groq_token))
                             .json(&api_req)
                             .send();
 
@@ -89,11 +85,11 @@ pub fn start_server() {
                                     format!("Failed to parse JSON. HTTP {}. Raw Response: {}", status, raw_text)
                                 }
                             },
-                            Err(e) => format!("**SYSTEM ERROR:** Could not reach OpenRouter API. Details: {}", e),
+                            Err(e) => format!("**SYSTEM ERROR:** Could not reach Groq API. Details: {}", e),
                         };
                         
                         let formatted_output = format!(
-                            "**Llama 3.1 8B Cloud Core:**\n{}",
+                            "**Groq Llama 3.1 Cloud Core:**\n{}",
                             output.trim()
                         );
                         
