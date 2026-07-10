@@ -51,9 +51,9 @@ pub fn start_server() {
                         let hf_token = std::env::var("HF_TOKEN").unwrap_or_else(|_| "".to_string());
                         
                         // Use the Bulletproof OpenAI-Compatible Endpoint for HuggingFace!
-                        // This guarantees support for massive models like Qwen2.5-72B
+                        // This guarantees support for the Chat API! We use the 7B model as 72B is restricted for free accounts.
                         let hf_req = serde_json::json!({
-                            "model": "Qwen/Qwen2.5-72B-Instruct",
+                            "model": "Qwen/Qwen2.5-7B-Instruct",
                             "messages": [
                                 {"role": "user", "content": payload.prompt}
                             ],
@@ -87,7 +87,7 @@ pub fn start_server() {
                         };
                         
                         let formatted_output = format!(
-                            "**Qwen2.5 72B Cloud Core:**\n{}",
+                            "**Qwen2.5 7B Cloud Core:**\n{}",
                             output.trim()
                         );
                         
