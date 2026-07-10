@@ -13,9 +13,15 @@ pub struct QueryResponse {
     pub routed_to_swarm: bool,
 }
 
+use tokenizers::Tokenizer;
+use std::path::Path;
+
 pub fn start_server() {
     let server = Server::http("0.0.0.0:8080").unwrap();
     println!("Web API Server listening on 0.0.0.0:8080");
+
+    println!("[Obsidian Boot] Connecting to Ollama Open-Source Inference Engine on localhost:11434...");
+    println!("[Obsidian Boot] AGI Online. Awaiting web queries...");
 
     for mut request in server.incoming_requests() {
         if request.method() == &Method::Options {
@@ -37,24 +43,36 @@ pub fn start_server() {
 
                 let (answer, routed_to_swarm) = match decision {
                     RouteDecision::LocalReflex => {
-                        // 1. Initialize the massive AGI architecture on CPU (Ternary weights)
-                        let device = candle_core::Device::Cpu;
-                        // Massive 100,000 vocab size, 256 hidden dim, 4 deep SSM layers
-                        let llm = obsidian_ml::model::ObsidianLLM::new(100_000, 256, 4, &device).expect("Failed to init LLM");
+                        println!("\n[Infer] Routing query to Ollama: '{}'", payload.prompt);
                         
-                        // 2. Mock tokenization (since we haven't downloaded a 3GB tokenizer.json file yet)
-                        // A real pass: let tokens = tokenizer.encode(payload.prompt, true);
-                        let mock_tokens = candle_core::Tensor::new(&[[1u32, 54, 999, 14, 2]], &device).unwrap();
+                        let client = reqwest::blocking::Client::new();
+                        let ollama_req = serde_json::json!({
+                            "model": "qwen2:7b",
+                            "prompt": payload.prompt,
+                            "stream": false
+                        });
+
+                        let response = client.post("http://127.0.0.1:11434/api/generate")
+                            .json(&ollama_req)
+                            .send();
+
+                        let output = match response {
+                            Ok(res) => {
+                                if let Ok(json) = res.json::<serde_json::Value>() {
+                                    json["response"].as_str().unwrap_or("Error parsing Ollama response").to_string()
+                                } else {
+                                    "Failed to parse Ollama JSON".to_string()
+                                }
+                            },
+                            Err(_) => "**SYSTEM ERROR:** Could not reach Ollama at localhost:11434. Is the background engine running?".to_string(),
+                        };
                         
-                        // 3. Execute the forward pass through the Ternary State Space Layers!
-                        let logits = llm.forward(&mock_tokens).unwrap();
-                        let dims = logits.dims3().unwrap(); // [batch, seq_len, vocab_size]
-                        
-                        let output = format!(
-                            "**Live AGI Execution:**\nSuccessfully processed your query through {} deep Ternary SSM layers.\nLogit Output Shape: `{:?}`.\n\n*The mathematical matrix operations are fully functional! Pre-training is required to translate these logits back into English words.*",
-                            llm.layers.len(), dims
+                        let formatted_output = format!(
+                            "**Qwen2 7B Intelligence Core:**\n{}",
+                            output
                         );
-                        (output, false)
+                        
+                        (formatted_output, false)
                     },
                     RouteDecision::GlobalSwarm => {
                         let output = format!(

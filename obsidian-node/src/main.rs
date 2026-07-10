@@ -39,8 +39,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Block main thread to allow the background RLAIF loops to run
     tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
     
-    // Execute Full Training Phase
-    trainer_daemon::run_training_loop().await;
+    // If we are booting the API in Kaggle, skip the massive training loop!
+    if std::env::var("KAGGLE_API_MODE").is_err() {
+        println!("Executing Full Training Phase...");
+        trainer_daemon::run_training_loop().await;
+    } else {
+        println!("KAGGLE_API_MODE detected. Skipping Training Phase.");
+    }
     
     // Spawn Web API Server in a dedicated system thread (blocking)
     std::thread::spawn(move || {

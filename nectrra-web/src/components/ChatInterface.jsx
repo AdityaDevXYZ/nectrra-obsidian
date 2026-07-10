@@ -9,22 +9,30 @@ export default function ChatInterface() {
   const [input, setInput] = useState('')
   const [isThinking, setIsThinking] = useState(false)
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return
     const userMsg = input
     setMessages(prev => [...prev, { role: 'user', content: userMsg }])
     setInput('')
     setIsThinking(true)
 
-    // Simulate backend response demonstrating the architecture routing
-    setTimeout(() => {
-      let reply = "I am processing that via the local ternary reflex engine."
-      if (userMsg.length > 30 || userMsg.includes('math') || userMsg.includes('code') || userMsg.includes('?')) {
-        reply = "That query requires complex logic. I have successfully routed this to the global P2P swarm. (MCTS Swarm Response: Mathematically verified completion)."
-      }
-      setMessages(prev => [...prev, { role: 'obsidian', content: reply }])
+    try {
+      const response = await fetch('https://dirty-houses-ring.loca.lt/query', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Bypass-Tunnel-Reminder': 'true' // Required to bypass Localtunnel's warning screen!
+        },
+        body: JSON.stringify({ prompt: userMsg })
+      })
+      
+      const data = await response.json()
+      setMessages(prev => [...prev, { role: 'obsidian', content: data.answer }])
+    } catch (e) {
+      setMessages(prev => [...prev, { role: 'obsidian', content: "SYSTEM ERROR: Failed to connect to local Obsidian Node." }])
+    } finally {
       setIsThinking(false)
-    }, 2500)
+    }
   }
 
   return (

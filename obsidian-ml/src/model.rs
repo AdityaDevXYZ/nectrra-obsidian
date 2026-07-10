@@ -84,4 +84,30 @@ impl ObsidianLLM {
         println!("[ObsidianLLM] Checkpoint restored successfully.");
         Ok(())
     }
+
+    /// Autoregressive text generation! 
+    /// Takes initial token IDs and mathematically predicts the next `max_len` tokens.
+    pub fn generate(&self, prompt_tokens: &[u32], max_len: usize, device: &Device) -> Result<Vec<u32>, Error> {
+        let mut sequence = prompt_tokens.to_vec();
+        
+        for _ in 0..max_len {
+            // Convert current sequence to Tensor [batch=1, seq_len]
+            let input_batch = Tensor::new(sequence.as_slice(), device)?.unsqueeze(0)?;
+            
+            // Forward Pass
+            let logits = self.forward(&input_batch)?;
+            
+            // Get the logits for the very last token in the sequence
+            let (_b, seq_len, _vocab_size) = logits.dims3()?;
+            let last_token_logits = logits.narrow(1, seq_len - 1, 1)?.squeeze(1)?.squeeze(0)?;
+            
+            // Argmax Sampling (Pick the mathematically most probable next token)
+            // In a more advanced implementation, we would use Top-K or Temperature sampling here.
+            let next_token_id = last_token_logits.argmax(0)?.to_vec0::<u32>()?;
+            
+            sequence.push(next_token_id);
+        }
+        
+        Ok(sequence)
+    }
 }
