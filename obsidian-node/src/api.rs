@@ -51,9 +51,9 @@ pub fn start_server() {
                         let openrouter_token = std::env::var("OPENROUTER_API_KEY").unwrap_or_else(|_| "".to_string());
                         
                         // Use the Bulletproof Commercial OpenRouter API
-                        // This guarantees support for massive models like Qwen2.5-72B
+                        // We use Llama 3.1 8B Free because OpenRouter's 72B Qwen model was routing to a broken upstream server!
                         let api_req = serde_json::json!({
-                            "model": "qwen/qwen-2.5-72b-instruct",
+                            "model": "meta-llama/llama-3.1-8b-instruct:free",
                             "messages": [
                                 {"role": "user", "content": payload.prompt}
                             ],
@@ -93,7 +93,7 @@ pub fn start_server() {
                         };
                         
                         let formatted_output = format!(
-                            "**Qwen2.5 72B Cloud Core:**\n{}",
+                            "**Llama 3.1 8B Cloud Core:**\n{}",
                             output.trim()
                         );
                         

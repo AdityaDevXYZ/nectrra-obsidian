@@ -2224,8 +2224,6 @@ dependencies = [
 name = "obsidian-node"
 version = "0.1.0"
 dependencies = [
- "candle-core",
- "obsidian-ml",
  "obsidian-p2p",
  "reqwest",
  "serde",
