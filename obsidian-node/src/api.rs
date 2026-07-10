@@ -43,17 +43,17 @@ pub fn start_server() {
 
                 let (answer, routed_to_swarm) = match decision {
                     RouteDecision::LocalReflex => {
-                        println!("\n[Infer] Routing query to HuggingFace Global API: '{}'", payload.prompt);
+                        println!("\n[Infer] Routing query to OpenRouter Commercial API: '{}'", payload.prompt);
                         
                         let client = reqwest::blocking::Client::new();
                         
-                        // Read the secure HuggingFace API token from the cloud environment
-                        let hf_token = std::env::var("HF_TOKEN").unwrap_or_else(|_| "".to_string());
+                        // Read the secure OpenRouter API token from the cloud environment
+                        let openrouter_token = std::env::var("OPENROUTER_API_KEY").unwrap_or_else(|_| "".to_string());
                         
-                        // Use the Bulletproof OpenAI-Compatible Endpoint for HuggingFace!
-                        // This guarantees support for the Chat API! We use the 7B model as 72B is restricted for free accounts.
-                        let hf_req = serde_json::json!({
-                            "model": "Qwen/Qwen2.5-7B-Instruct",
+                        // Use the Bulletproof Commercial OpenRouter API
+                        // This guarantees support for massive models like Qwen2.5-72B
+                        let api_req = serde_json::json!({
+                            "model": "qwen/qwen-2.5-72b-instruct",
                             "messages": [
                                 {"role": "user", "content": payload.prompt}
                             ],
@@ -61,9 +61,11 @@ pub fn start_server() {
                             "temperature": 0.7
                         });
 
-                        let response = client.post("https://router.huggingface.co/hf-inference/v1/chat/completions")
-                            .header("Authorization", format!("Bearer {}", hf_token))
-                            .json(&hf_req)
+                        let response = client.post("https://openrouter.ai/api/v1/chat/completions")
+                            .header("Authorization", format!("Bearer {}", openrouter_token))
+                            .header("HTTP-Referer", "https://nectrra.com") // Recommended by OpenRouter
+                            .header("X-Title", "Nectrra Neural Mesh") // Recommended by OpenRouter
+                            .json(&api_req)
                             .send();
 
                         let output = match response {
@@ -77,17 +79,17 @@ pub fn start_server() {
                                             "Empty choices array".to_string()
                                         }
                                     } else {
-                                        json["error"].as_str().unwrap_or("API returned an unexpected JSON structure").to_string()
+                                        json["error"]["message"].as_str().unwrap_or("API returned an unexpected JSON structure").to_string()
                                     }
                                 } else {
                                     "Failed to parse JSON response".to_string()
                                 }
                             },
-                            Err(e) => format!("**SYSTEM ERROR:** Could not reach HuggingFace API. Details: {}", e),
+                            Err(e) => format!("**SYSTEM ERROR:** Could not reach OpenRouter API. Details: {}", e),
                         };
                         
                         let formatted_output = format!(
-                            "**Qwen2.5 7B Cloud Core:**\n{}",
+                            "**Qwen2.5 72B Cloud Core:**\n{}",
                             output.trim()
                         );
                         
