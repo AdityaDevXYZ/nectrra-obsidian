@@ -43,33 +43,58 @@ pub fn start_server() {
 
                 let (answer, routed_to_swarm) = match decision {
                     RouteDecision::LocalReflex => {
-                        println!("\n[Infer] Routing query to Ollama: '{}'", payload.prompt);
+                        println!("\n[Infer] Routing query to HuggingFace Global API: '{}'", payload.prompt);
                         
                         let client = reqwest::blocking::Client::new();
-                        let ollama_req = serde_json::json!({
-                            "model": "qwen2:7b",
-                            "prompt": payload.prompt,
-                            "stream": false
+                        
+                        // Read the secure HuggingFace API token from the cloud environment
+                        let hf_token = std::env::var("HF_TOKEN").unwrap_or_else(|_| "".to_string());
+                        
+                        let hf_req = serde_json::json!({
+                            "inputs": payload.prompt,
+                            "parameters": {
+                                "max_new_tokens": 250,
+                                "temperature": 0.7
+                            }
                         });
 
-                        let response = client.post("http://127.0.0.1:11434/api/generate")
-                            .json(&ollama_req)
+                        // Route to Qwen2.5-72B-Instruct for maximum commercial-grade intelligence!
+                        let response = client.post("https://api-inference.huggingface.co/models/Qwen/Qwen2.5-72B-Instruct")
+                            .header("Authorization", format!("Bearer {}", hf_token))
+                            .json(&hf_req)
                             .send();
 
                         let output = match response {
                             Ok(res) => {
                                 if let Ok(json) = res.json::<serde_json::Value>() {
-                                    json["response"].as_str().unwrap_or("Error parsing Ollama response").to_string()
+                                    // HuggingFace returns an array: [{"generated_text": "..."}]
+                                    if let Some(arr) = json.as_array() {
+                                        if let Some(first) = arr.get(0) {
+                                            first["generated_text"].as_str().unwrap_or("Error parsing HuggingFace response").to_string()
+                                        } else {
+                                            "Empty response array from HuggingFace".to_string()
+                                        }
+                                    } else {
+                                        // Sometimes it returns an error object: {"error": "..."}
+                                        json["error"].as_str().unwrap_or("Failed to parse JSON array").to_string()
+                                    }
                                 } else {
-                                    "Failed to parse Ollama JSON".to_string()
+                                    "Failed to parse HuggingFace JSON".to_string()
                                 }
                             },
-                            Err(_) => "**SYSTEM ERROR:** Could not reach Ollama at localhost:11434. Is the background engine running?".to_string(),
+                            Err(_) => "**SYSTEM ERROR:** Could not reach HuggingFace API. Is the server offline?".to_string(),
+                        };
+                        
+                        // Clean up the prompt from the generated text if HuggingFace repeats it
+                        let clean_output = if output.starts_with(&payload.prompt) {
+                            output[payload.prompt.len()..].trim().to_string()
+                        } else {
+                            output
                         };
                         
                         let formatted_output = format!(
-                            "**Qwen2 7B Intelligence Core:**\n{}",
-                            output
+                            "**Qwen2.5 72B Cloud Core:**\n{}",
+                            clean_output
                         );
                         
                         (formatted_output, false)

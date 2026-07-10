@@ -17,11 +17,12 @@ export default function ChatInterface() {
     setIsThinking(true)
 
     try {
-      const response = await fetch('https://little-moons-relax.loca.lt/query', {
+      // Fetch from the permanent cloud API (or localhost if testing)
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+      const response = await fetch(`${API_URL}/query`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Bypass-Tunnel-Reminder': 'true' // Required to bypass Localtunnel's warning screen!
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ prompt: userMsg })
       })
