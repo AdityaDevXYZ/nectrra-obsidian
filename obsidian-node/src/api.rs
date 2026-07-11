@@ -55,7 +55,7 @@ pub fn start_server() {
                             "messages": [
                                 {"role": "user", "content": payload.prompt}
                             ],
-                            "max_tokens": 500,
+                            "max_tokens": 4096,
                             "temperature": 0.7
                         });
 
