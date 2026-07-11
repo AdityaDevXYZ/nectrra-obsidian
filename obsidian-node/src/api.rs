@@ -88,10 +88,7 @@ pub fn start_server() {
                             Err(e) => format!("**SYSTEM ERROR:** Could not reach Groq API. Details: {}", e),
                         };
                         
-                        let formatted_output = format!(
-                            "**Groq Llama 3.1 Cloud Core:**\n{}",
-                            output.trim()
-                        );
+                        let formatted_output = output.trim().to_string();
                         
                         (formatted_output, false)
                     },

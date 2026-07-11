@@ -192,10 +192,36 @@ button:hover {
 }
 
 .chat-bubble.obsidian {
+  background: rgba(14, 165, 233, 0.1);
+  color: #e2e8f0;
   align-self: flex-start;
-  background: transparent;
-  color: #ddd;
-  border-left: 3px solid var(--accent-neon);
+  border-left: 2px solid var(--accent-neon);
+}
+
+/* Clean up markdown formatting inside chat bubbles */
+.markdown-body p {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+}
+
+.markdown-body p:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-body strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+.markdown-body ul, .markdown-body ol {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding-left: 1.5rem;
+}
+
+.markdown-body li {
+  margin-bottom: 0.25rem;
 }
 
 .input-area {

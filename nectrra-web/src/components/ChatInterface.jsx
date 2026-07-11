@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Send, Hexagon } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
 
 export default function ChatInterface() {
   const [messages, setMessages] = useState([
@@ -53,7 +54,13 @@ export default function ChatInterface() {
               animate={{ opacity: 1, y: 0 }}
             >
               {msg.role === 'obsidian' && <Hexagon size={16} color="var(--accent-neon)" style={{ marginBottom: '8px' }}/>}
-              {msg.content}
+              {msg.role === 'obsidian' ? (
+                <div className="markdown-body">
+                  <ReactMarkdown>{msg.content}</ReactMarkdown>
+                </div>
+              ) : (
+                msg.content
+              )}
             </motion.div>
           ))}
           {isThinking && (
